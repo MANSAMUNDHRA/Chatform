@@ -109,8 +109,30 @@
         }
 
         .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-info {
             color: #666;
             font-size: 0.75rem;
+        }
+
+        .clear-btn {
+            background: #dc2626;
+            color: #fff;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .clear-btn:hover {
+            background: #b91c1c;
         }
 
         .messages-area {
@@ -159,9 +181,6 @@
             cursor: pointer;
             font-family: 'Courier New', monospace;
             font-size: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
         }
 
         .decrypt-btn:hover {
@@ -241,10 +260,6 @@
             font-size: 0.75rem;
         }
 
-        .hidden {
-            display: none;
-        }
-
         /* Scrollbar styling */
         .messages-area::-webkit-scrollbar {
             width: 8px;
@@ -262,6 +277,56 @@
         .messages-area::-webkit-scrollbar-thumb:hover {
             background: #444;
         }
+
+        /* Notification styling */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #1a1a1a;
+            border: 1px solid #4ade80;
+            border-left: 4px solid #4ade80;
+            padding: 1rem;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            z-index: 1000;
+            max-width: 300px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification-title {
+            color: #4ade80;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .notification-message {
+            color: #d4d4d4;
+            font-size: 0.75rem;
+        }
+
+        .notification-close {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
     </style>
 </head>
 <body>
@@ -269,12 +334,9 @@
     <div class="login-screen" id="loginScreen">
         <div class="login-box">
             <h1>🔧 Code Editor v2.4.1</h1>
-            <p style="color: #666; font-size: 0.875rem; margin-bottom: 1rem;">Enter your developer name:</p>
-            <!-- <input type="text" id="usernameInput" placeholder="username" /> -->
-             <input type="text" id="usernameInput" placeholder="username" />
-<input type="text" id="roomInput" placeholder="room code" />
-<!-- <button id="loginBtn">Initialize Session</button> -->
-
+            <p style="color: #666; font-size: 0.875rem; margin-bottom: 1rem;">Enter your credentials:</p>
+            <input type="text" id="usernameInput" placeholder="username" />
+            <input type="text" id="roomInput" placeholder="room code" />
             <button id="loginBtn">Initialize Session</button>
         </div>
     </div>
@@ -287,10 +349,9 @@
                 <span>• Advanced C++ Development</span>
             </div>
             <div class="header-right">
-                User: <span id="currentUser"></span>
+                <span class="user-info" id="currentUser"></span>
+                <button id="clearBtn" class="clear-btn">🧹 Clear</button>
             </div>
-            <button id="clearBtn" class="decrypt-btn">🧹 Clear</button>
-
         </div>
 
         <div class="messages-area" id="messagesArea"></div>
@@ -305,59 +366,57 @@
     </div>
 
     <script>
-        const ALLOWED_USERS = ['mansha', 'bunny']; // change names only
-
-        // const API_URL = 'http://localhost:3000/api';
-        const API_URL = '/api';
+        const ALLOWED_USERS = ['mansha', 'bunny'];
+        const API_URL = 'http://localhost:3000/api';
 
         let username = '';
-        let decryptedIds = new Set();
-        let isUserScrolling = false;
-        let scrollTimeout;
-        let cleared = false;
         let roomCode = '';
+        let decryptedIds = new Set();
+        let lastMessageCount = 0;
+        let lastMessageId = 0;
 
-        
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
 
         // Login functionality
         document.getElementById('loginBtn').addEventListener('click', login);
         document.getElementById('usernameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('roomInput').focus();
+        });
+        document.getElementById('roomInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') login();
         });
 
-        // function login() {
-        //     const input = document.getElementById('usernameInput').value.trim();
-        //     // if (input) {
-        //     if (ALLOWED_USERS.includes(input)) {
+        function login() {
+            const input = document.getElementById('usernameInput').value.trim();
+            const room = document.getElementById('roomInput').value.trim();
 
-        //         username = input;
-        //         document.getElementById('currentUser').textContent = username;
-        //         document.getElementById('loginScreen').style.display = 'none';
-        //         document.getElementById('chatContainer').classList.add('active');
-        //         loadMessages();
-        //         setInterval(loadMessages, 3000);
-        //     }
-        // }
+            if (ALLOWED_USERS.includes(input) && room) {
+                username = input;
+                roomCode = room;
 
-      function login() {
-  const input = document.getElementById('usernameInput').value.trim();
-  const room = document.getElementById('roomInput').value.trim();
+                console.log('Logged in:', username, 'Room:', roomCode);
 
-  if (ALLOWED_USERS.includes(input) && room) {
-    username = input;
-    roomCode = room;
+                document.getElementById('currentUser').textContent = 'User: ' + username + ' @ ' + roomCode;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('chatContainer').classList.add('active');
+                
+                loadMessages();
+                setInterval(checkNewMessages, 3000);
+            } else {
+                alert('Invalid username or room code');
+            }
+        }
 
-    console.log("Logged in:", username, "Room:", roomCode); // 👈 debug
-
-    document.getElementById('currentUser').textContent =
-      username + ' @ ' + roomCode;
-
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('chatContainer').classList.add('active');
-    loadMessages();
-    setInterval(loadMessages, 3000);
-  }
-}
+        // Clear button
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            if (confirm('Clear terminal? This only affects your view.')) {
+                decryptedIds.clear();
+                document.getElementById('messagesArea').innerHTML = '<div style="color: #666; text-align: center; padding: 2rem;">// Terminal cleared</div>';
+            }
+        });
 
         // Message functionality
         document.getElementById('sendBtn').addEventListener('click', sendMessage);
@@ -365,25 +424,78 @@
             if (e.key === 'Enter') sendMessage();
         });
 
-        // Detect user scrolling
+        // Scrolling
         const messagesArea = document.getElementById('messagesArea');
+        let isUserScrolling = false;
         messagesArea.addEventListener('scroll', () => {
             const isAtBottom = messagesArea.scrollHeight - messagesArea.scrollTop <= messagesArea.clientHeight + 100;
             isUserScrolling = !isAtBottom;
         });
 
-       async function loadMessages() {
-  try {
-    const response = await fetch(
-      `${API_URL}/messages?room=${encodeURIComponent(roomCode)}`
-    );
-    const messages = await response.json();
-    displayMessages(messages);
-  } catch (error) {
-    console.error('Error loading messages:', error);
-  }
-}
+        async function checkNewMessages() {
+            try {
+                const response = await fetch(`${API_URL}/messages?room=${encodeURIComponent(roomCode)}`);
+                const messages = await response.json();
+                
+                if (messages.length > lastMessageCount) {
+                    const newMessages = messages.slice(lastMessageCount);
+                    newMessages.forEach(msg => {
+                        if (msg.user !== username && msg.id > lastMessageId) {
+                            const realMsg = extractMessage(msg.code);
+                            showNotification(msg.user, realMsg);
+                            lastMessageId = msg.id;
+                        }
+                    });
+                    lastMessageCount = messages.length;
+                    displayMessages(messages);
+                }
+            } catch (error) {
+                console.error('Error checking messages:', error);
+            }
+        }
 
+        async function loadMessages() {
+            try {
+                const response = await fetch(`${API_URL}/messages?room=${encodeURIComponent(roomCode)}`);
+                const messages = await response.json();
+                
+                console.log('Loaded messages:', messages);
+                
+                lastMessageCount = messages.length;
+                if (messages.length > 0) {
+                    lastMessageId = messages[messages.length - 1].id;
+                }
+                displayMessages(messages);
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
+
+        function showNotification(user, message) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                const notification = new Notification('Terminal CPP', {
+                    body: `${user}: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`,
+                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">💻</text></svg>'
+                });
+                
+                notification.onclick = () => {
+                    window.focus();
+                    notification.close();
+                };
+
+                setTimeout(() => notification.close(), 5000);
+            }
+
+            const notifDiv = document.createElement('div');
+            notifDiv.className = 'notification';
+            notifDiv.innerHTML = `
+                <button class="notification-close" onclick="this.parentElement.remove()">×</button>
+                <div class="notification-title">Terminal CPP</div>
+                <div class="notification-message">${user}: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}</div>
+            `;
+            document.body.appendChild(notifDiv);
+            setTimeout(() => notifDiv.remove(), 5000);
+        }
 
         function displayMessages(messages) {
             const container = document.getElementById('messagesArea');
@@ -392,6 +504,12 @@
             const isAtBottom = scrollHeight - scrollPos <= container.clientHeight + 100;
             
             container.innerHTML = '';
+            
+            if (messages.length === 0) {
+                container.innerHTML = '<div style="color: #666; text-align: center; padding: 2rem;">// No messages yet</div>';
+                return;
+            }
+            
             messages.forEach(msg => {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'message';
@@ -400,11 +518,9 @@
                         <span class="message-user">// ${msg.user}</span>
                         <div class="message-actions">
                             <span class="message-time">${new Date(msg.timestamp).toLocaleTimeString()}</span>
-                             ${ALLOWED_USERS.includes(username) ? `
-<button class="decrypt-btn" onclick="toggleDecrypt(${msg.id})">
-    ${decryptedIds.has(msg.id) ? '🙈 Hide' : '👁️ Decrypt'}
-</button>` : ``}
-
+                            <button class="decrypt-btn" onclick="toggleDecrypt(${msg.id})">
+                                ${decryptedIds.has(msg.id) ? '🙈 Hide' : '👁️ Decrypt'}
+                            </button>
                         </div>
                     </div>
                     <div id="msg-${msg.id}">
@@ -420,18 +536,14 @@
                 container.appendChild(messageDiv);
             });
 
-            // Only scroll to bottom if user was already at bottom
-            if (isAtBottom && messages.length > 0) {
+            if (isAtBottom) {
                 setTimeout(() => {
                     container.scrollTop = container.scrollHeight;
                 }, 50);
             }
         }
 
-        // function toggleDecrypt(id) {
         function toggleDecrypt(id) {
-    if (!ALLOWED_USERS.includes(username)) return;
-
             if (decryptedIds.has(id)) {
                 decryptedIds.delete(id);
             } else {
@@ -442,60 +554,56 @@
 
         function extractMessage(code) {
             const match = code.match(/\/\/ (?:Message|Content|Plaintext|Decoded|Original): (.+)/);
-            // return match ? match[1] : 'Unable to decrypt';
-            return ALLOWED_USERS.includes(username) && match ? match[1] : 'Unable to decrypt';
-
+            return match ? match[1] : 'Unable to decrypt';
         }
 
         function splitBase64(str, size = 30) {
-    return str.match(new RegExp('.{1,' + size + '}', 'g')).join('" \n"');
-}
-
+            const matches = str.match(new RegExp('.{1,' + size + '}', 'g'));
+            return matches ? matches.join('" \n"') : str;
+        }
 
         async function sendMessage() {
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
             
-            if (text && username) {
-                const code = generateComplexCode(text);
+            if (!text) return;
+            if (!username || !roomCode) {
+                alert('Please login first');
+                return;
+            }
+            
+            const code = generateComplexCode(text);
+            
+            console.log('Sending message:', { room: roomCode, user: username, text });
+            
+            try {
+                const response = await fetch(`${API_URL}/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        room: roomCode,
+                        user: username,
+                        code: code
+                    })
+                });
                 
-                try {
-                    await fetch(`${API_URL}/messages`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-  room: roomCode,
-  user: username,
-  code: code
-})
-                    });
-                    
+                if (response.ok) {
                     input.value = '';
-                    cleared = false;
-
                     await loadMessages();
-                    // Force scroll to bottom after sending
                     setTimeout(() => {
                         messagesArea.scrollTop = messagesArea.scrollHeight;
                     }, 100);
-                } catch (error) {
-                    console.error('Error sending message:', error);
+                } else {
+                    console.error('Failed to send message:', response.status);
+                    alert('Failed to send message');
                 }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('Error sending message. Is the server running?');
             }
         }
-
-       document.getElementById('clearBtn').addEventListener('click', clearTerminal);
-         function clearTerminal() {
-  decryptedIds.clear();
-  document.getElementById('messagesArea').innerHTML = '';
-  cleared = true;
-}
-
-
-
-
 
         function generateComplexCode(text) {
             const templates = [
@@ -507,9 +615,7 @@ using namespace std;
 class DataProcessor {
 private:
     vector<int> buffer;
-    // string encKey = "${splitBase64(btoa(msg))}.substring(0, 8)}";
     string encKey = "${btoa(msg).substring(0, 8)}";
-
     
 public:
     void processData() {
@@ -661,8 +767,6 @@ int main() {
             const template = templates[Math.floor(Math.random() * templates.length)];
             return template(text);
         }
-        // document.getElementById('clearBtn').addEventListener('click', clearTerminal);
-
     </script>
 </body>
 </html>
