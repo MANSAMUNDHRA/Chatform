@@ -891,18 +891,38 @@
     }
 
     function extractMessage(code) {
-        const patterns = [
-            /\/\/ (?:Message|Content|Plaintext|Decoded|Original)[^:]*:\s*\n\s*\/\/ (.+)/,
-            /\/\/ (?:Message|Content|Plaintext|Decoded|Original)[^:]*: (.+)/
-        ];
+    const lines = code.split('\n');
 
-        for (const pattern of patterns) {
-            const match = code.match(pattern);
-            if (match) return match[1].trim();
+    let collecting = false;
+    let parts = [];
+
+    for (let line of lines) {
+        line = line.trim();
+
+        // Start collecting after any content marker
+        if (
+            line.startsWith('// Content') ||
+            line.startsWith('// Message') ||
+            line.startsWith('// Plaintext') ||
+            line.startsWith('// Decoded') ||
+            line.startsWith('// Original')
+        ) {
+            collecting = true;
+            continue;
         }
 
-        return 'Unable to decrypt';
+        // Collect actual message lines
+        if (collecting && line.startsWith('//')) {
+            parts.push(line.replace(/^\/\/\s?/, ''));
+        } 
+        // Stop if block ends
+        else if (collecting) {
+            break;
+        }
     }
+
+    return parts.length ? parts.join(' ') : 'Unable to decrypt';
+}
 
     function splitBase64(str, size = 30) {
         const matches = str.match(new RegExp('.{1,' + size + '}', 'g'));
