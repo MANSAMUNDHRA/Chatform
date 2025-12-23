@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Editor v2.4.1</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #4ade80;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #0a0a0a;
+        }
+
+        .login-box {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .login-box h1 {
+            color: #4ade80;
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .login-box input {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: #4ade80;
+            padding: 0.75rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 1rem;
+        }
+
+        .login-box input:focus {
+            outline: none;
+            border-color: #4ade80;
+        }
+
+        .login-box button {
+            width: 100%;
+            background: #16a34a;
+            color: #0a0a0a;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .login-box button:hover {
+            background: #15803d;
+        }
+
+        .chat-container {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .chat-container.active {
+            display: flex;
+        }
+
+        .header {
+            background: #1a1a1a;
+            border-bottom: 1px solid #333;
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-left span:first-child {
+            color: #4ade80;
+        }
+
+        .header-left span:last-child {
+            color: #666;
+            font-size: 0.75rem;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-info {
+            color: #666;
+            font-size: 0.75rem;
+        }
+
+        .clear-btn {
+            background: #dc2626;
+            color: #fff;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .clear-btn:hover {
+            background: #b91c1c;
+        }
+
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 1rem;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .message-user {
+            color: #60a5fa;
+            font-size: 0.75rem;
+        }
+
+        .message-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .message-time {
+            color: #666;
+            font-size: 0.75rem;
+        }
+
+        .decrypt-btn {
+            background: none;
+            border: none;
+            color: #fbbf24;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+        }
+
+        .decrypt-btn:hover {
+            color: #f59e0b;
+        }
+
+        .message-code {
+            color: #4ade80;
+            font-size: 0.7rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .decrypted-message {
+            background: #0a0a0a;
+            border: 1px solid #fbbf24;
+            border-radius: 4px;
+            padding: 1rem;
+        }
+
+        .decrypted-label {
+            color: #fbbf24;
+            font-size: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .decrypted-text {
+            color: #4ade80;
+            font-size: 1rem;
+        }
+
+        .input-area {
+            background: #1a1a1a;
+            border-top: 1px solid #333;
+            padding: 1rem;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .input-area input {
+            flex: 1;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: #4ade80;
+            padding: 0.75rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .input-area input:focus {
+            outline: none;
+            border-color: #4ade80;
+        }
+
+        .send-btn {
+            background: #16a34a;
+            color: #0a0a0a;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .send-btn:hover {
+            background: #15803d;
+        }
+
+        .input-hint {
+            color: #666;
+            font-size: 0.75rem;
+        }
+
+        /* Scrollbar styling */
+        .messages-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages-area::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+
+        .messages-area::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        .messages-area::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+
+        /* Notification styling */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #1a1a1a;
+            border: 1px solid #4ade80;
+            border-left: 4px solid #4ade80;
+            padding: 1rem;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            z-index: 1000;
+            max-width: 300px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification-title {
+            color: #4ade80;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .notification-message {
+            color: #d4d4d4;
+            font-size: 0.75rem;
+        }
+
+        .notification-close {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        /* ============================
+   Responsive Design
+============================ */
+
+/* 📱 Mobile phones (<= 600px) */
+@media (max-width: 600px) {
+    .login-box {
+        padding: 1.5rem 1rem;
+        max-width: 90%;
+    }
+
+    .login-box h1 {
+        font-size: 1rem;
+        text-align: center;
+    }
+
+    .header {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+
+    .header-left span:last-child {
+        display: none; /* hide subtitle */
+    }
+
+    .messages-area {
+        padding: 0.5rem;
+    }
+
+    .message {
+        padding: 0.75rem;
+    }
+
+    .message-code {
+        font-size: 0.65rem;
+    }
+
+    .input-wrapper {
+        flex-direction: column;
+    }
+
+    .send-btn {
+        width: 100%;
+    }
+
+    .input-area input {
+        font-size: 0.8rem;
+    }
+
+    .notification {
+        right: 10px;
+        left: 10px;
+        max-width: unset;
+    }
+}
+
+/* 📱📲 Tablets (601px - 900px) */
+@media (max-width: 900px) {
+    .login-box {
+        max-width: 80%;
+    }
+
+    .message-code {
+        font-size: 0.68rem;
+    }
+
+    .header {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .input-area {
+        padding: 0.75rem;
+    }
+
+    .send-btn {
+        padding: 0.6rem 1rem;
+    }
+}
+
+/* 🖥️ Small laptops (901px - 1200px) */
+@media (max-width: 1200px) {
+    .login-box {
+        max-width: 450px;
+    }
+}
+
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-box">
+            <h1>🔧 Code Editor v2.4.1</h1>
+            <p style="color: #666; font-size: 0.875rem; margin-bottom: 1rem;">Enter your credentials:</p>
+            <input type="text" id="usernameInput" placeholder="username" />
+            <input type="text" id="roomInput" placeholder="room code" />
+            <button id="loginBtn">Initialize Session</button>
+        </div>
+    </div>
+
+    <!-- Chat Container -->
+    <div class="chat-container" id="chatContainer">
+        <div class="header">
+            <div class="header-left">
+                <span>main.cpp</span>
+                <span>• Advanced C++ Development</span>
+            </div>
+            <div class="header-right">
+                <span class="user-info" id="currentUser"></span>
+                <button id="clearBtn" class="clear-btn">🧹 Clear</button>
+            </div>
+        </div>
+
+        <div class="messages-area" id="messagesArea"></div>
+
+        <div class="input-area">
+            <div class="input-wrapper">
+                <input type="text" id="messageInput" placeholder="// Write your message here..." />
+                <button class="send-btn" id="sendBtn">Compile</button>
+            </div>
+            <div class="input-hint">Press Enter to compile • Click 👁️ Decrypt to reveal messages</div>
+        </div>
+    </div>
+
+    <script>
+        const ALLOWED_USERS = ['printf', 'scanf', '<br>'];
+        const API_URL = 'http://localhost:3000/api';
+
+        let username = '';
+        let roomCode = '';
+        let decryptedIds = new Set();
+        let lastMessageCount = 0;
+        let lastMessageId = 0;
+        let notifiedIds = new Set();
+        let maxSeenMessageId = 0;
+
+
+        // Request notification permission on load
+        window.addEventListener('load', () => {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        });
+
+        // Login functionality
+        document.getElementById('loginBtn').addEventListener('click', login);
+        document.getElementById('usernameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('roomInput').focus();
+        });
+        document.getElementById('roomInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login();
+        });
+
+        // Add this function after the event listeners
+function login() {
+    const input = document.getElementById('usernameInput').value.trim();
+    const room = document.getElementById('roomInput').value.trim();
+
+    if (ALLOWED_USERS.includes(input) && room) {
+        username = input;
+        roomCode = room;
+
+        document.getElementById('currentUser').textContent =
+            'User: ' + username + ' @ ' + roomCode;
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('chatContainer').classList.add('active');
+
+        loadMessages();
+
+        // ✅ start polling only once
+        if (!window._pollingStarted) {
+            window._pollingStarted = true;
+            setInterval(checkNewMessages, 3000);
+        }
+    } else {
+        alert('Invalid username or room code');
+    }
+}
+
+        // Clear button
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            if (confirm('Clear terminal? This only affects your view.')) {
+                decryptedIds.clear();
+                document.getElementById('messagesArea').innerHTML = '<div style="color: #666; text-align: center; padding: 2rem;">// Terminal cleared</div>';
+            }
+        });
+
+        // Message functionality
+        document.getElementById('sendBtn').addEventListener('click', sendMessage);
+        document.getElementById('messageInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Scrolling
+        const messagesArea = document.getElementById('messagesArea');
+        let isUserScrolling = false;
+        messagesArea.addEventListener('scroll', () => {
+            const isAtBottom = messagesArea.scrollHeight - messagesArea.scrollTop <= messagesArea.clientHeight + 100;
+            isUserScrolling = !isAtBottom;
+        });
+
+       async function loadMessages() {
+    try {
+        const response = await fetch(`${API_URL}/messages?room=${encodeURIComponent(roomCode)}`);
+        const messages = await response.json();
+        
+        console.log('Loaded messages:', messages);
+
+        // Mark all existing messages as seen & notified
+        messages.forEach(msg => {
+            maxSeenMessageId = Math.max(maxSeenMessageId, msg.id);
+            if (msg.user !== username) {
+                notifiedIds.add(msg.id);
+            }
+        });
+
+        displayMessages(messages);
+
+    } catch (error) {
+        console.error('Error loading messages:', error);
+    }
+}
+
+
+   async function checkNewMessages() {
+    try {
+        const response = await fetch(`${API_URL}/messages?room=${encodeURIComponent(roomCode)}`);
+        const messages = await response.json();
+
+        let latestNew = null;
+
+        messages.forEach(msg => {
+            if (msg.id > maxSeenMessageId) {
+                maxSeenMessageId = msg.id;
+
+                if (msg.user !== username && !notifiedIds.has(msg.id)) {
+                    latestNew = msg;
+                    notifiedIds.add(msg.id);
+                }
+            }
+        });
+
+        if (latestNew) {
+            showBrowserNotification(latestNew.user, '');
+        }
+
+        displayMessages(messages);
+
+    } catch (error) {
+        console.error('Error checking messages:', error);
+    }
+}
+
+ 
+  function showBrowserNotification(user, message) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        // Close any existing notifications first
+        if (window.currentNotification) {
+            window.currentNotification.close();
+        }
+        
+        // Create notification with just title "Terminal CPP" and no message body
+        const notification = new Notification('Terminal CPP', {
+            // Empty body or very minimal
+            body: '', // Empty body - just shows title
+            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23000" width="100" height="100"/><text x="50" y="60" font-size="50" text-anchor="middle" fill="%2300ff00" font-family="monospace">C++</text></svg>',
+            silent: true, // Make it silent
+            tag: 'terminal-cpp-notification' // Same tag for all notifications to replace previous ones
+        });
+
+        // Store reference to current notification
+        window.currentNotification = notification;
+
+        notification.onclick = () => {
+            window.focus();
+            notification.close();
+            window.currentNotification = null;
+        };
+
+        // Auto close after 3 seconds
+        setTimeout(() => {
+            if (notification) {
+                notification.close();
+                window.currentNotification = null;
+            }
+        }, 3000);
+    }
+}
+
+
+        function displayMessages(messages) {
+            const container = document.getElementById('messagesArea');
+            const scrollPos = container.scrollTop;
+            const scrollHeight = container.scrollHeight;
+            const isAtBottom = scrollHeight - scrollPos <= container.clientHeight + 100;
+            
+            container.innerHTML = '';
+            
+            if (messages.length === 0) {
+                container.innerHTML = '<div style="color: #666; text-align: center; padding: 2rem;">// No messages yet</div>';
+                return;
+            }
+            
+            messages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                messageDiv.innerHTML = `
+                    <div class="message-header">
+                        <span class="message-user">// ${msg.user}</span>
+                        <div class="message-actions">
+                            <span class="message-time">${new Date(msg.timestamp).toLocaleTimeString()}</span>
+                            <button class="decrypt-btn" onclick="toggleDecrypt(${msg.id})">
+                                ${decryptedIds.has(msg.id) ? '🙈 Hide' : '👁️ Decrypt'}
+                            </button>
+                        </div>
+                    </div>
+                    <div id="msg-${msg.id}">
+                        ${decryptedIds.has(msg.id) 
+                            ? `<div class="decrypted-message">
+                                <div class="decrypted-label">🔓 DECRYPTED MESSAGE:</div>
+                                <div class="decrypted-text">${extractMessage(msg.code)}</div>
+                               </div>`
+                            : `<pre class="message-code">${msg.code}</pre>`
+                        }
+                    </div>
+                `;
+                container.appendChild(messageDiv);
+            });
+
+            if (isAtBottom) {
+                setTimeout(() => {
+                    container.scrollTop = container.scrollHeight;
+                }, 50);
+            }
+        }
+
+        function toggleDecrypt(id) {
+            if (decryptedIds.has(id)) {
+                decryptedIds.delete(id);
+            } else {
+                decryptedIds.add(id);
+            }
+            loadMessages();
+        }
+
+        function extractMessage(code) {
+            // Try multiple patterns to extract the message
+            const patterns = [
+                /\/\/ (?:Message|Content|Plaintext|Decoded|Original)[^:]*:\s*\n\s*\/\/ (.+)/,
+                /\/\/ (?:Message|Content|Plaintext|Decoded|Original)[^:]*: (.+)/
+            ];
+            
+            for (const pattern of patterns) {
+                const match = code.match(pattern);
+                if (match) return match[1].trim();
+            }
+            
+            return 'Unable to decrypt';
+        }
+
+        function splitBase64(str, size = 30) {
+            const matches = str.match(new RegExp('.{1,' + size + '}', 'g'));
+            return matches ? matches.join('" \n"') : str;
+        }
+
+       async function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const text = input.value.trim();
+    
+    if (!text) return;
+    if (!username || !roomCode) {
+        alert('Please login first');
+        return;
+    }
+    
+    const code = generateComplexCode(text);
+    
+    console.log('Sending message:', { room: roomCode, user: username, text });
+    
+    try {
+        const response = await fetch(`${API_URL}/messages`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                room: roomCode,
+                user: username,
+                code: code
+            })
+        });
+        
+        if (response.ok) {
+            input.value = '';
+            
+            // Wait a bit for the message to be saved, then reload
+            setTimeout(async () => {
+                await loadMessages();
+                setTimeout(() => {
+                    messagesArea.scrollTop = messagesArea.scrollHeight;
+                }, 100);
+            }, 500);
+            
+        } else {
+            console.error('Failed to send message:', response.status);
+            alert('Failed to send message');
+        }
+    } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Error sending message. Is the server running?');
+    }
+}
+
+function generateComplexCode(text) {
+            const templates = [
+                (msg) => `#include<iostream>
+#include<string>
+#include<vector>
+#include<algorithm>
+#include<cmath>
+using namespace std;
+
+class DataProcessor {
+private:
+    vector<int> buffer;
+    vector<double> coefficients;
+    string encKey = "${btoa(msg).substring(0, 8)}";
+    int processingStage = 0;
+    
+    void initializeBuffers() {
+        buffer.reserve(${Math.floor(Math.random() * 100) + 50});
+        for(int i = 0; i < ${Math.floor(Math.random() * 80) + 30}; i++) {
+            buffer.push_back(i * 0x${Math.random().toString(16).substring(2, 4)});
+        }
+        
+        coefficients.resize(${Math.floor(Math.random() * 40) + 20});
+        for(size_t j = 0; j < coefficients.size(); j++) {
+            coefficients[j] = sin(j * 0.${Math.floor(Math.random() * 9999)});
+        }
+    }
+    
+    int computeChecksum(const vector<int>& data) {
+        int sum = 0;
+        for(auto val : data) {
+            sum = (sum << 3) ^ val;
+        }
+        return sum & 0xFFFFFF;
+    }
+    
+public:
+    DataProcessor() {
+        initializeBuffers();
+        processingStage = 1;
+    }
+    
+    void processData() {
+        int hash = 0x${Math.random().toString(16).substring(2, 10)};
+        
+        for(int i = 0; i < ${Math.floor(Math.random() * 50) + 10}; i++) {
+            hash ^= (i * 0x${Math.random().toString(16).substring(2, 6)});
+        }
+        
+        vector<int> tempBuffer(${Math.floor(Math.random() * 60) + 25});
+        for(size_t k = 0; k < tempBuffer.size(); k++) {
+            tempBuffer[k] = (k ^ hash) + 0x${Math.random().toString(16).substring(2, 5)};
+        }
+        
+        int checksum = computeChecksum(tempBuffer);
+        cout << "Checksum: 0x" << hex << checksum << dec << endl;
+        
+        string payload = "${splitBase64(btoa(msg))}";
+        cout << "Processing: " << payload.length() << " bytes" << endl;
+        
+        for(int m = 0; m < ${Math.floor(Math.random() * 30) + 15}; m++) {
+            int dummy = (m * m) ^ 0x${Math.random().toString(16).substring(2, 6)};
+            buffer.push_back(dummy);
+        }
+        
+        // Decoded message part 1:
+        // ${msg.substring(0, Math.min(60, msg.length))}
+        // Continuation:
+        // ${msg.substring(60, Math.min(120, msg.length))}
+        ${msg.length > 120 ? `// Final part:\n        // ${msg.substring(120)}` : ''}
+        
+        sort(buffer.begin(), buffer.end());
+        
+        double average = 0.0;
+        for(auto& val : buffer) {
+            average += static_cast<double>(val);
+        }
+        average /= buffer.size();
+        
+        cout << "Average value: " << average << endl;
+        cout << "Buffer size: " << buffer.size() << endl;
+        
+        processingStage = 2;
+    }
+    
+    void cleanup() {
+        buffer.clear();
+        coefficients.clear();
+        processingStage = 0;
+    }
+};
+
+int main() {
+    DataProcessor dp;
+    dp.processData();
+    dp.cleanup();
+    return 0;
+}`,
+
+                (msg) => `#include<iostream>
+#include<ctime>
+#include<cstdlib>
+#include<vector>
+#include<iomanip>
+using namespace std;
+
+struct Packet {
+    int seq_num;
+    string data;
+    long timestamp;
+    int priority;
+    vector<unsigned char> metadata;
+};
+
+class NetworkManager {
+private:
+    vector<Packet> packetQueue;
+    int totalPackets = 0;
+    
+    void generateMetadata(Packet& p) {
+        p.metadata.resize(${Math.floor(Math.random() * 40) + 20});
+        for(size_t i = 0; i < p.metadata.size(); i++) {
+            p.metadata[i] = rand() % 256;
+        }
+    }
+    
+    int calculatePriority() {
+        int base = ${Math.floor(Math.random() * 100)};
+        for(int i = 0; i < ${Math.floor(Math.random() * 15) + 5}; i++) {
+            base = (base * 31) ^ (rand() % 128);
+        }
+        return base % 10;
+    }
+    
+public:
+    void transmitPacket() {
+        srand(time(0));
+        Packet p;
+        p.seq_num = ${Math.floor(Math.random() * 10000)};
+        p.timestamp = ${Date.now()};
+        p.priority = calculatePriority();
+        
+        generateMetadata(p);
+        
+        int checksum = 0;
+        for(int i = 0; i < ${Math.floor(Math.random() * 20) + 5}; i++) {
+            checksum += rand() % 256;
+        }
+        
+        cout << "Initializing transmission..." << endl;
+        cout << "Priority: " << p.priority << endl;
+        
+        for(int j = 0; j < ${Math.floor(Math.random() * 25) + 10}; j++) {
+            int noise = rand() % 1000;
+            checksum = (checksum + noise) & 0xFFFF;
+        }
+        
+        p.data = "${splitBase64(btoa(msg))}";
+        cout << "TX[" << p.seq_num << "]: " << p.data.substr(0, 8) << "..." << endl;
+        
+        packetQueue.push_back(p);
+        
+        // Message segment 1:
+        // ${msg.substring(0, Math.min(55, msg.length))}
+        // Message segment 2:
+        // ${msg.substring(55, Math.min(110, msg.length))}
+        ${msg.length > 110 ? `// Message segment 3:\n        // ${msg.substring(110)}` : ''}
+        
+        cout << "Metadata size: " << p.metadata.size() << " bytes" << endl;
+        cout << "Checksum: 0x" << hex << checksum << dec << endl;
+        
+        totalPackets++;
+        
+        for(int k = 0; k < ${Math.floor(Math.random() * 20) + 8}; k++) {
+            int verify = (k * checksum) ^ 0x${Math.random().toString(16).substring(2, 5)};
+            cout << ".";
+        }
+        cout << endl << "Transmission complete." << endl;
+    }
+    
+    int getQueueSize() {
+        return packetQueue.size();
+    }
+};
+
+int main() {
+    NetworkManager nm;
+    nm.transmitPacket();
+    cout << "Queue size: " << nm.getQueueSize() << endl;
+    return 0;
+}`,
+
+                (msg) => `#include<iostream>
+#include<algorithm>
+#include<vector>
+#include<cmath>
+#include<numeric>
+using namespace std;
+
+class HashComputer {
+private:
+    vector<int> data;
+    vector<int> primes;
+    
+    void generatePrimes(int n) {
+        primes.clear();
+        vector<bool> isPrime(n + 1, true);
+        for(int p = 2; p * p <= n; p++) {
+            if(isPrime[p]) {
+                for(int i = p * p; i <= n; i += p) {
+                    isPrime[i] = false;
+                }
+            }
+        }
+        for(int p = 2; p <= n; p++) {
+            if(isPrime[p]) primes.push_back(p);
+        }
+    }
+    
+    int mixData(int a, int b) {
+        return ((a << 5) - a) ^ b;
+    }
+    
+public:
+    HashComputer() {
+        generatePrimes(${Math.floor(Math.random() * 500) + 200});
+    }
+    
+    void computeHash() {
+        data.resize(${Math.floor(Math.random() * 30) + 10});
+        
+        for(int i = 0; i < data.size(); i++) {
+            data[i] = (i * ${Math.floor(Math.random() * 100)}) ^ 0x${Math.random().toString(16).substring(2, 6)};
+        }
+        
+        cout << "Initial data size: " << data.size() << endl;
+        
+        for(int j = 0; j < ${Math.floor(Math.random() * 35) + 15}; j++) {
+            int mixed = mixData(j, 0x${Math.random().toString(16).substring(2, 5)});
+            data.push_back(mixed);
+        }
+        
+        sort(data.begin(), data.end());
+        
+        int median = data[data.size() / 2];
+        cout << "Median value: " << median << endl;
+        
+        string encoded = "${splitBase64(btoa(msg))}";
+        int result = 0;
+        
+        for(auto& val : data) {
+            result += val & 0xFF;
+        }
+        
+        for(size_t p = 0; p < min(primes.size(), static_cast<size_t>(${Math.floor(Math.random() * 20) + 10})); p++) {
+            result = mixData(result, primes[p]);
+        }
+        
+        // Content line 1:
+        // ${msg.substring(0, Math.min(58, msg.length))}
+        // Content line 2:
+        // ${msg.substring(58, Math.min(116, msg.length))}
+        ${msg.length > 116 ? `// Content line 3:\n        // ${msg.substring(116)}` : ''}
+        
+        int sum = accumulate(data.begin(), data.end(), 0);
+        double avg = static_cast<double>(sum) / data.size();
+        
+        cout << "Hash: 0x" << hex << result << dec << endl;
+        cout << "Average: " << avg << endl;
+        cout << "Sum: " << sum << endl;
+        
+        auto maxElement = max_element(data.begin(), data.end());
+        auto minElement = min_element(data.begin(), data.end());
+        
+        cout << "Range: [" << *minElement << ", " << *maxElement << "]" << endl;
+    }
+};
+
+int main() {
+    HashComputer hc;
+    hc.computeHash();
+    return 0;
+}`,
+
+                (msg) => `#include<iostream>
+#include<fstream>
+#include<string>
+#include<vector>
+#include<ctime>
+using namespace std;
+
+class FileHandler {
+private:
+    string filepath = "/tmp/data_${Math.random().toString(36).substring(7)}.bin";
+    vector<unsigned char> header;
+    long fileSize = 0;
+    
+    void createHeader() {
+        header.resize(${Math.floor(Math.random() * 30) + 16});
+        header[0] = 0x${Math.random().toString(16).substring(2, 4)};
+        header[1] = 0x${Math.random().toString(16).substring(2, 4)};
+        
+        for(size_t i = 2; i < header.size(); i++) {
+            header[i] = (i * 7) ^ 0x${Math.random().toString(16).substring(2, 4)};
+        }
+    }
+    
+    int computeCRC(const unsigned char* data, int length) {
+        int crc = 0x${Math.random().toString(16).substring(2, 8)};
+        for(int i = 0; i < length; i++) {
+            crc = (crc << 1) ^ data[i];
+        }
+        return crc & 0xFFFFFF;
+    }
+    
+public:
+    FileHandler() {
+        createHeader();
+    }
+    
+    void writeData() {
+        ofstream file(filepath, ios::binary);
+        
+        if(!file.is_open()) {
+            cerr << "Failed to open file" << endl;
+            return;
+        }
+        
+        file.write(reinterpret_cast<char*>(header.data()), header.size());
+        fileSize += header.size();
+        
+        unsigned char buffer[${Math.floor(Math.random() * 50) + 20}];
+        for(int i = 0; i < sizeof(buffer); i++) {
+            buffer[i] = rand() % 256;
+        }
+        
+        int crc1 = computeCRC(buffer, sizeof(buffer));
+        cout << "CRC: 0x" << hex << crc1 << dec << endl;
+        
+        for(int j = 0; j < ${Math.floor(Math.random() * 25) + 10}; j++) {
+            unsigned char padding = (j * 13) ^ 0x${Math.random().toString(16).substring(2, 2)};
+            file.write(reinterpret_cast<char*>(&padding), 1);
+            fileSize++;
+        }
+        
+        string payload = "${splitBase64(btoa(msg))}";
+        file.write(reinterpret_cast<char*>(buffer), sizeof(buffer));
+        fileSize += sizeof(buffer);
+        
+        // Plaintext part A:
+        // ${msg.substring(0, Math.min(52, msg.length))}
+        // Plaintext part B:
+        // ${msg.substring(52, Math.min(104, msg.length))}
+        ${msg.length > 104 ? `// Plaintext part C:\n        // ${msg.substring(104)}` : ''}
+        
+        vector<int> footer(${Math.floor(Math.random() * 20) + 8});
+        for(size_t k = 0; k < footer.size(); k++) {
+            footer[k] = k * k + 0x${Math.random().toString(16).substring(2, 4)};
+            file.write(reinterpret_cast<char*>(&footer[k]), sizeof(int));
+            fileSize += sizeof(int);
+        }
+        
+        cout << "Written " << fileSize << " bytes total" << endl;
+        cout << "Buffer: " << sizeof(buffer) << " bytes" << endl;
+        cout << "Header: " << header.size() << " bytes" << endl;
+        cout << "Footer: " << footer.size() * sizeof(int) << " bytes" << endl;
+        
+        file.close();
+        
+        cout << "File saved to: " << filepath << endl;
+    }
+    
+    long getFileSize() {
+        return fileSize;
+    }
+};
+
+int main() {
+    FileHandler fh;
+    fh.writeData();
+    cout << "Total size: " << fh.getFileSize() << " bytes" << endl;
+    return 0;
+}`,
+
+                (msg) => `#include<iostream>
+#include<thread>
+#include<mutex>
+#include<chrono>
+#include<vector>
+#include<queue>
+using namespace std;
+
+mutex mtx;
+queue<int> taskQueue;
+int completedTasks = 0;
+
+class ThreadPool {
+private:
+    vector<thread> workers;
+    int numThreads;
+    
+    void initializeQueue() {
+        for(int i = 0; i < ${Math.floor(Math.random() * 40) + 20}; i++) {
+            taskQueue.push(i * 0x${Math.random().toString(16).substring(2, 4)});
+        }
+    }
+    
+public:
+    ThreadPool(int n) : numThreads(n) {
+        initializeQueue();
+    }
+    
+    void start() {
+        for(int i = 0; i < numThreads; i++) {
+            workers.emplace_back(workerThread, i);
+        }
+    }
+    
+    void join() {
+        for(auto& t : workers) {
+            if(t.joinable()) t.join();
+        }
+    }
+    
+    static void workerThread(int id) {
+        this_thread::sleep_for(chrono::milliseconds(${Math.floor(Math.random() * 100)}));
+        
+        mtx.lock();
+        
+        vector<int> localBuffer(${Math.floor(Math.random() * 30) + 15});
+        for(size_t i = 0; i < localBuffer.size(); i++) {
+            localBuffer[i] = (id * i) ^ 0x${Math.random().toString(16).substring(2, 5)};
+        }
+        
+        int processedCount = 0;
+        while(!taskQueue.empty()) {
+            int task = taskQueue.front();
+            taskQueue.pop();
+            processedCount++;
+            
+            if(processedCount > ${Math.floor(Math.random() * 5) + 2}) break;
+        }
+        
+        string data = "${splitBase64(btoa(msg))}";
+        int checksum = 0x${Math.random().toString(16).substring(2, 8)};
+        
+        for(auto val : localBuffer) {
+            checksum ^= val;
+        }
+        
+        cout << "Thread[" << id << "] processed: " << data.length() << " bytes" << endl;
+        cout << "Thread[" << id << "] tasks: " << processedCount << endl;
+        cout << "Thread[" << id << "] checksum: 0x" << hex << checksum << dec << endl;
+        
+        // Original chunk 1:
+        // ${msg.substring(0, Math.min(50, msg.length))}
+        // Original chunk 2:
+        // ${msg.substring(50, Math.min(100, msg.length))}
+        ${msg.length > 100 ? `// Original chunk 3:\n        // ${msg.substring(100)}` : ''}
+        
+        completedTasks += processedCount;
+        
+        for(int j = 0; j < ${Math.floor(Math.random() * 15) + 5}; j++) {
+            this_thread::sleep_for(chrono::microseconds(${Math.floor(Math.random() * 100)}));
+        }
+        
+        mtx.unlock();
+        
+        cout << "Thread[" << id << "] finished" << endl;
+    }
+};
+
+int main() {
+    ThreadPool pool(${Math.floor(Math.random() * 4) + 2});
+    
+    cout << "Starting thread pool..." << endl;
+    pool.start();
+    pool.join();
+    
+    cout << "Total completed tasks: " << completedTasks << endl;
+    cout << "Remaining tasks: " << taskQueue.size() << endl;
+    
+    return 0;
+}`
+            ];
+
+            const template = templates[Math.floor(Math.random() * templates.length)];
+            return template(text);
+        }
+    </script>
+</body>
+</html>
