@@ -1040,7 +1040,7 @@ public:
         
         // Decoded message part 1:
         // ${msg.substring(0, Math.min(60, msg.length))}
-        // Continuation:
+        // Decoded message part 2:
         // ${msg.substring(60, Math.min(120, msg.length))}
         ${msg.length > 120 ? `// Final part:\n        // ${msg.substring(120)}` : ''}
         
