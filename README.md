@@ -76,7 +76,8 @@ Messages appear as **large, intimidating C++ programs**:
 
 But hidden inside comments are **real messages**.
 
-📸 *(Terminal Chat Screenshot)*
+![Hidden message inside C++ code](image/img1.png)
+
 
 ---
 
@@ -91,7 +92,8 @@ Each message has a **Decrypt button**:
 
 This is **manual, message-by-message decryption**.
 
-📸 *(Screenshot showing per-message decrypt)*
+![Hidden message inside C++ code](image/img2.png)
+
 
 ---
 
@@ -114,7 +116,8 @@ When OFF:
 If you don’t understand this feature — that’s okay.
 It means it’s **working**.
 
-📸 *(Screenshot showing Decrypt Mode ON)*
+![Hidden message inside C++ code](image/img3.png)
+
 
 ---
 
@@ -128,7 +131,8 @@ Click **🧹 Clear**:
 
 Exactly like a real terminal.
 
-📸 *(Screenshot after clearing terminal)*
+![Hidden message inside C++ code](image/img.png)
+
 
 ---
 
